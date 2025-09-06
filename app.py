@@ -3,6 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 import firebase_admin
 from google.cloud import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
+from firebase_admin import credentials
 import hashlib
 import json
 import os
@@ -35,7 +36,7 @@ except Exception as e:
     if not firebase_admin._apps:
         firebase_admin.initialize_app()
 
-db = firestore.client()
+db = firestore.Client()
 
 # Email configuration - set these environment variables for production
 SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
