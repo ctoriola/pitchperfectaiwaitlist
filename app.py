@@ -36,7 +36,7 @@ except Exception as e:
     if not firebase_admin._apps:
         firebase_admin.initialize_app()
 
-db = firestore.Client()
+db = firestore.client()
 
 # Email configuration - set these environment variables for production
 SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
