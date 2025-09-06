@@ -393,30 +393,99 @@ def excelsior_export_users():
 @app.route('/excelsior/emails')
 @admin_required
 def excelsior_emails():
+    campaigns = []
+    
     try:
-        # Check if email_campaigns collection exists, if not create it
-        campaigns_ref = db.collection('email_campaigns')
+        print("Starting campaigns loading process...")
         
-        # Try to get campaigns, handle if collection doesn't exist
+        # Test Firebase connection first
         try:
-            campaigns_docs = campaigns_ref.order_by('created_at', direction=firestore.Query.DESCENDING).get()
-        except Exception as query_error:
-            print(f"Query error (collection may not exist): {query_error}")
-            # Collection doesn't exist or is empty, return empty list
+            test_ref = db.collection('waitlist_users').limit(1).get()
+            print(f"Firebase connection test successful, found {len(test_ref)} test docs")
+        except Exception as conn_error:
+            print(f"Firebase connection failed: {conn_error}")
+            import traceback
+            traceback.print_exc()
+            flash('Firebase connection error', 'error')
             return render_template('admin_emails.html', campaigns=[])
         
-        campaigns = []
-        for doc in campaigns_docs:
-            campaign_data = doc.to_dict()
-            campaign_data['id'] = doc.id
-            campaigns.append(campaign_data)
+        # Alternative approach: Use stream() instead of get()
+        campaigns_ref = db.collection('email_campaigns')
+        print("Got campaigns collection reference")
         
-        print(f"Loaded {len(campaigns)} campaigns successfully")
-        return render_template('admin_emails.html', campaigns=campaigns)
+        # Try multiple approaches to get documents
+        campaigns_docs = []
+        
+        # Method 1: Simple get()
+        try:
+            campaigns_docs = list(campaigns_ref.get())
+            print(f"Method 1 (get): Retrieved {len(campaigns_docs)} campaign documents")
+        except Exception as get_error:
+            print(f"Method 1 failed: {get_error}")
+            
+            # Method 2: Stream documents
+            try:
+                campaigns_docs = list(campaigns_ref.stream())
+                print(f"Method 2 (stream): Retrieved {len(campaigns_docs)} campaign documents")
+            except Exception as stream_error:
+                print(f"Method 2 failed: {stream_error}")
+                
+                # Method 3: Create collection if it doesn't exist
+                try:
+                    print("Attempting to initialize email_campaigns collection...")
+                    dummy_doc = {
+                        'subject': 'Welcome to PitchPerfectAI!',
+                        'content': 'This is a sample email campaign.',
+                        'status': 'draft',
+                        'created_at': datetime.now(),
+                        'sent_at': None,
+                        'recipients_count': 0,
+                        'is_sample': True
+                    }
+                    sample_ref = campaigns_ref.add(dummy_doc)
+                    print(f"Created sample campaign with ID: {sample_ref[1].id}")
+                    campaigns_docs = list(campaigns_ref.get())
+                    print(f"Method 3 (create sample): Retrieved {len(campaigns_docs)} campaign documents")
+                except Exception as create_error:
+                    print(f"Method 3 failed: {create_error}")
+                    import traceback
+                    traceback.print_exc()
+                    campaigns_docs = []
+        
+        # Process documents
+        campaigns_list = []
+        print(f"Processing {len(campaigns_docs)} documents...")
+        
+        for i, doc in enumerate(campaigns_docs):
+            try:
+                print(f"Processing document {i+1}: {doc.id}")
+                campaign_data = doc.to_dict()
+                print(f"Document data keys: {list(campaign_data.keys()) if campaign_data else 'None'}")
+                
+                if campaign_data:
+                    campaign_data['id'] = doc.id
+                    campaigns_list.append(campaign_data)
+                    print(f"Added campaign: {campaign_data.get('subject', 'No subject')}")
+                else:
+                    print(f"Document {doc.id} has no data")
+                    
+            except Exception as doc_error:
+                print(f"Error processing document {doc.id}: {doc_error}")
+                import traceback
+                traceback.print_exc()
+                continue
+        
+        # Sort by created_at in Python instead of Firestore
+        campaigns_list.sort(key=lambda x: x.get('created_at', datetime.min), reverse=True)
+        
+        print(f"Successfully loaded {len(campaigns_list)} campaigns")
+        return render_template('admin_emails.html', campaigns=campaigns_list)
         
     except Exception as e:
-        print(f"Emails page error: {e}")
-        flash('Error loading campaigns', 'error')
+        print(f"Critical error in excelsior_emails: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Error loading email campaigns', 'error')
         return render_template('admin_emails.html', campaigns=[])
 
 @app.route('/excelsior/new-email')
