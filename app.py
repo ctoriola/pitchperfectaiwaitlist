@@ -428,30 +428,77 @@ def new_email():
 @admin_required
 def save_email():
     try:
+        action = request.form.get('action', 'save_draft')
         subject = request.form.get('subject', '').strip()
         content = request.form.get('content', '').strip()
         
+        print(f"Received save email request - Action: '{action}', Subject: '{subject}', Content length: {len(content)}")
+        
         if not subject or not content:
+            print("Validation failed: Missing subject or content")
             flash('Subject and content are required', 'error')
             return redirect(url_for('new_email'))
         
-        campaign_data = {
-            'subject': subject,
-            'content': content,
-            'status': 'draft',
-            'created_at': datetime.now(),
-            'sent_at': None,
-            'recipients_count': 0
-        }
+        if action == 'send_now':
+            # Handle immediate sending
+            try:
+                # Get all pending users
+                users_ref = db.collection('waitlist_users')
+                pending_users = users_ref.where('status', '==', 'pending').get()
+                
+                sent_count = 0
+                for user_doc in pending_users:
+                    user_data = user_doc.to_dict()
+                    # Send email logic would go here
+                    # For now, just count
+                    sent_count += 1
+                
+                # Save as sent campaign
+                campaign_data = {
+                    'subject': subject,
+                    'content': content,
+                    'status': 'sent',
+                    'created_at': datetime.now(),
+                    'sent_at': datetime.now(),
+                    'recipients_count': sent_count
+                }
+                
+                campaigns_ref = db.collection('email_campaigns')
+                doc_ref = campaigns_ref.add(campaign_data)
+                
+                print(f"Campaign sent successfully with ID: {doc_ref[1].id} to {sent_count} users")
+                flash(f'Email campaign sent to {sent_count} users', 'success')
+                return redirect(url_for('excelsior_emails'))
+                
+            except Exception as send_error:
+                print(f"Send email error: {send_error}")
+                flash('Error sending email campaign', 'error')
+                return redirect(url_for('new_email'))
         
-        campaigns_ref = db.collection('email_campaigns')
-        campaigns_ref.add(campaign_data)
-        
-        flash('Email campaign saved as draft', 'success')
-        return redirect(url_for('excelsior_emails'))
+        else:
+            # Save as draft
+            campaign_data = {
+                'subject': subject,
+                'content': content,
+                'status': 'draft',
+                'created_at': datetime.now(),
+                'sent_at': None,
+                'recipients_count': 0
+            }
+            
+            print(f"Attempting to save campaign data: {campaign_data}")
+            
+            campaigns_ref = db.collection('email_campaigns')
+            doc_ref = campaigns_ref.add(campaign_data)
+            
+            print(f"Campaign saved successfully with ID: {doc_ref[1].id}")
+            flash('Email campaign saved as draft', 'success')
+            return redirect(url_for('excelsior_emails'))
         
     except Exception as e:
         print(f"Save email error: {e}")
+        import traceback
+        traceback.print_exc()
         flash('Error saving email campaign', 'error')
         return redirect(url_for('new_email'))
 

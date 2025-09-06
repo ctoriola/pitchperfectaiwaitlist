@@ -162,10 +162,10 @@ You can use variables like {{name}}, {{email}}, and {{company}} which will be au
                 This will send the email to all pending users. This action cannot be undone.
             </p>
             <div class="flex justify-center space-x-3">
-                    <button type="button" onclick="window.location.href='{{ url_for('excelsior_emails') }}'" 
-                            class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">
-                        <i class="fas fa-times mr-2"></i>Cancel
-                    </button>
+                <button type="button" onclick="window.location.href='{{ url_for('excelsior_emails') }}'" 
+                        class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </button>
                 <button onclick="sendEmail()" 
                         class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">
                     Send Email
@@ -335,6 +335,7 @@ function sendEmail() {
     // Create a hidden form to submit with send_now action
     const form = document.createElement('form');
     form.method = 'POST';
+    form.action = '{{ url_for("save_email") }}';
     form.style.display = 'none';
     
     const actionInput = document.createElement('input');
