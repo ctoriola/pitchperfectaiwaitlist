@@ -281,12 +281,28 @@ def excelsior_dashboard():
         for u in all_users:
             user_data = u.to_dict()
             signup_date = user_data.get('signup_date')
-            if signup_date and hasattr(signup_date, 'replace'):
-                # Convert timezone-aware datetime to naive for comparison
-                if signup_date.tzinfo is not None:
-                    signup_date = signup_date.replace(tzinfo=None)
-                if signup_date > week_ago:
-                    recent_users.append(u)
+            if signup_date:
+                try:
+                    # Handle different date formats
+                    if hasattr(signup_date, 'replace'):
+                        # Convert timezone-aware datetime to naive for comparison
+                        if signup_date.tzinfo is not None:
+                            signup_date = signup_date.replace(tzinfo=None)
+                        if signup_date > week_ago:
+                            recent_users.append(u)
+                    elif isinstance(signup_date, str):
+                        # Handle string dates
+                        try:
+                            parsed_date = datetime.fromisoformat(signup_date.replace('Z', '+00:00'))
+                            if parsed_date.tzinfo is not None:
+                                parsed_date = parsed_date.replace(tzinfo=None)
+                            if parsed_date > week_ago:
+                                recent_users.append(u)
+                        except ValueError:
+                            print(f"Could not parse date: {signup_date}")
+                except Exception as date_error:
+                    print(f"Date processing error: {date_error}")
+                    continue
         
         stats = {
             'total_users': total_users,
@@ -294,13 +310,15 @@ def excelsior_dashboard():
             'contacted_users': contacted_users,
             'recent_signups': len(recent_users)
         }
-        
+        print(f"Dashboard stats calculated: {stats}")
         return render_template('admin_dashboard.html', stats=stats)
         
     except Exception as e:
         print(f"Dashboard error: {e}")
+        import traceback
+        traceback.print_exc()
         flash('Error loading dashboard', 'error')
-        return render_template('admin_dashboard.html', stats={})
+        return render_template('admin_dashboard.html', stats={'total_users': 0, 'pending_users': 0, 'contacted_users': 0, 'recent_signups': 0})
 
 @app.route('/excelsior/users')
 @admin_required
@@ -376,8 +394,16 @@ def excelsior_export_users():
 @admin_required
 def excelsior_emails():
     try:
+        # Check if email_campaigns collection exists, if not create it
         campaigns_ref = db.collection('email_campaigns')
-        campaigns_docs = campaigns_ref.order_by('created_at', direction=firestore.Query.DESCENDING).get()
+        
+        # Try to get campaigns, handle if collection doesn't exist
+        try:
+            campaigns_docs = campaigns_ref.order_by('created_at', direction=firestore.Query.DESCENDING).get()
+        except Exception as query_error:
+            print(f"Query error (collection may not exist): {query_error}")
+            # Collection doesn't exist or is empty, return empty list
+            return render_template('admin_emails.html', campaigns=[])
         
         campaigns = []
         for doc in campaigns_docs:
@@ -385,6 +411,7 @@ def excelsior_emails():
             campaign_data['id'] = doc.id
             campaigns.append(campaign_data)
         
+        print(f"Loaded {len(campaigns)} campaigns successfully")
         return render_template('admin_emails.html', campaigns=campaigns)
         
     except Exception as e:
