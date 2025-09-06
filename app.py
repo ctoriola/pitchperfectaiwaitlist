@@ -1,9 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, make_response
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import firebase_admin
-from google.cloud import firestore
-from google.cloud.firestore_v1.base_query import FieldFilter
-from firebase_admin import credentials
+from firebase_admin import firestore, credentials
 import hashlib
 import json
 import os
