@@ -1,9 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, make_response
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import firebase_admin
-from firebase_admin import credentials, firestore
-from datetime import datetime
+from google.cloud import firestore
+from google.cloud.firestore_v1.base_query import FieldFilter
 import hashlib
+import json
+import os
+from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
