@@ -9,8 +9,6 @@ from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import os
-import json
 import secrets
 from functools import wraps
 
@@ -278,7 +276,6 @@ def excelsior_dashboard():
         contacted_users = len([u for u in all_users if u.to_dict().get('status') == 'contacted'])
         
         # Get recent signups (last 7 days)
-        from datetime import timedelta
         week_ago = datetime.now() - timedelta(days=7)
         recent_users = [u for u in all_users if u.to_dict().get('signup_date', datetime.min) > week_ago]
         
@@ -544,8 +541,6 @@ def delete_campaign(campaign_id):
 def api_stats():
     try:
         # Get signups by day for the last 30 days
-        from datetime import timedelta
-        
         users_ref = db.collection('waitlist_users')
         thirty_days_ago = datetime.now() - timedelta(days=30)
         
