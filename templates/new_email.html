@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}New Email Campaign - PitchPerfectAI Waitlist{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-semibold text-gray-900">PitchPerfectAI Admin</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Welcome, {{ current_user.username }}</span>
+                    <a href="{{ url_for('admin_logout') }}" class="text-sm text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Navigation Tabs -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex space-x-8">
+                <a href="{{ url_for('admin_dashboard') }}" 
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-chart-bar mr-2"></i>Dashboard
+                </a>
+                <a href="{{ url_for('admin_users') }}" 
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-users mr-2"></i>Users
+                </a>
+                <a href="{{ url_for('admin_emails') }}" 
+                   class="border-primary text-primary whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-envelope mr-2"></i>Emails
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- New Email Content -->
+    <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Create Email Campaign</h2>
+                <a href="{{ url_for('admin_emails') }}" 
+                   class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Emails
+                </a>
+            </div>
+
+            <form method="POST" class="space-y-6">
+                <div class="bg-white shadow sm:rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <!-- Subject -->
+                        <div class="mb-6">
+                            <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">
+                                Email Subject
+                            </label>
+                            <input type="text" 
+                                   id="subject" 
+                                   name="subject" 
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                                   placeholder="Enter email subject...">
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mb-6">
+                            <label for="content" class="block text-sm font-medium text-gray-700 mb-2">
+                                Email Content
+                            </label>
+                            <div class="border border-gray-300 rounded-md">
+                                <div class="bg-gray-50 px-3 py-2 border-b border-gray-300 flex items-center space-x-2">
+                                    <button type="button" onclick="formatText('bold')" class="p-1 text-gray-600 hover:text-gray-800">
+                                        <i class="fas fa-bold"></i>
+                                    </button>
+                                    <button type="button" onclick="formatText('italic')" class="p-1 text-gray-600 hover:text-gray-800">
+                                        <i class="fas fa-italic"></i>
+                                    </button>
+                                    <button type="button" onclick="formatText('underline')" class="p-1 text-gray-600 hover:text-gray-800">
+                                        <i class="fas fa-underline"></i>
+                                    </button>
+                                    <div class="border-l border-gray-300 h-6 mx-2"></div>
+                                    <button type="button" onclick="insertVariable('name')" class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                                        {{name}}
+                                    </button>
+                                    <button type="button" onclick="insertVariable('email')" class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                                        {{email}}
+                                    </button>
+                                    <button type="button" onclick="insertVariable('company')" class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                                        {{company}}
+                                    </button>
+                                </div>
+                                <textarea id="content" 
+                                          name="content" 
+                                          rows="12" 
+                                          required
+                                          class="w-full px-3 py-2 border-0 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary resize-none"
+                                          placeholder="Write your email content here...
+
+You can use variables like {{name}}, {{email}}, and {{company}} which will be automatically replaced for each recipient."></textarea>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">
+                                Use variables like {{name}}, {{email}}, {{company}} for personalization
+                            </p>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="mb-6">
+                            <h3 class="text-sm font-medium text-gray-700 mb-2">Preview</h3>
+                            <div class="border border-gray-200 rounded-md p-4 bg-gray-50 min-h-32">
+                                <div class="text-sm text-gray-600" id="preview">
+                                    <div class="font-medium mb-2" id="previewSubject">Subject will appear here...</div>
+                                    <div id="previewContent">Email content will appear here...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recipients Info -->
+                        <div class="mb-6 p-4 bg-blue-50 rounded-md">
+                            <div class="flex items-center">
+                                <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                                <span class="text-sm text-blue-800">
+                                    This email will be sent to all users with "pending" status.
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex justify-end space-x-3">
+                            <button type="submit" 
+                                    name="action" 
+                                    value="save_draft"
+                                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <i class="fas fa-save mr-2"></i>Save as Draft
+                            </button>
+                            <button type="button" 
+                                    onclick="confirmSend()"
+                                    class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">
+                                <i class="fas fa-paper-plane mr-2"></i>Send Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <i class="fas fa-paper-plane text-4xl text-primary mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Send Email Campaign?</h3>
+            <p class="text-sm text-gray-500 mb-6">
+                This will send the email to all pending users. This action cannot be undone.
+            </p>
+            <div class="flex justify-center space-x-3">
+                <button onclick="closeConfirmModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button onclick="sendEmail()" 
+                        class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">
+                    Send Email
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Email templates
+const templates = {
+    welcome: {
+        subject: "Welcome to PitchPerfectAI Waitlist! 🎉",
+        content: `Hi {{name}},
+
+Thank you for joining the PitchPerfectAI waitlist! We're thrilled to have you on board.
+
+PitchPerfectAI is revolutionizing how developers and startups create compelling pitch decks from their GitHub repositories. Our AI-powered platform will help you:
+
+✨ Transform your code into investor-ready presentations
+🚀 Highlight your project's key features and benefits
+📊 Generate professional slides with beautiful templates
+💡 Tell your project's story in a compelling way
+
+We're working hard to bring you the best possible experience. You'll be among the first to know when we launch!
+
+In the meantime, feel free to reply to this email with any questions or feedback.
+
+Best regards,
+The PitchPerfectAI Team
+
+P.S. Follow us on Twitter @PitchPerfectAI for updates and tips!`
+    },
+    update: {
+        subject: "PitchPerfectAI Development Update 📈",
+        content: `Hi {{name}},
+
+We wanted to share some exciting progress on PitchPerfectAI!
+
+🔥 What's New:
+• Enhanced AI analysis for better project understanding
+• New professional templates designed by presentation experts
+• Improved GitHub integration with support for more languages
+• Beta testing program launching soon
+
+📊 By the Numbers:
+• Over 1,000 developers on our waitlist
+• 50+ GitHub repositories analyzed in testing
+• 95% satisfaction rate from early testers
+
+🚀 Coming Soon:
+We're getting closer to launch! Beta invitations will start rolling out in the next few weeks, and waitlist members like you will get priority access.
+
+Thank you for your patience and continued interest in PitchPerfectAI!
+
+Best,
+The PitchPerfectAI Team`
+    },
+    launch: {
+        subject: "🎉 PitchPerfectAI is LIVE - Your Exclusive Access Inside!",
+        content: `Hi {{name}},
+
+The wait is over! PitchPerfectAI is officially live, and as a valued waitlist member, you get exclusive early access.
+
+🎯 Your Personal Invitation:
+🔗 Get started now: https://pitchperfectai.org/signup
+Use code: EARLYBIRD for 50% off your first month
+
+🚀 What You Can Do Now:
+• Connect your GitHub repositories
+• Generate your first pitch deck in minutes  
+• Choose from 10+ professional templates
+• Export to PowerPoint, PDF, or web format
+
+💡 Getting Started:
+1. Visit https://pitchperfectai.org and sign up with this email ({{email}})
+2. Connect your GitHub account
+3. Select a repository to analyze
+4. Watch the magic happen!
+
+We can't wait to see the amazing pitch decks you'll create. If you have any questions, our support team is standing by at support@pitchperfectai.org.
+
+Welcome to PitchPerfectAI!
+
+The PitchPerfectAI Team
+
+🌐 Website: https://pitchperfectai.org
+📧 Support: support@pitchperfectai.org
+🐦 Twitter: @PitchPerfectAI`
+    }
+};
+
+// Load template if specified in URL
+const urlParams = new URLSearchParams(window.location.search);
+const template = urlParams.get('template');
+if (template && templates[template]) {
+    document.getElementById('subject').value = templates[template].subject;
+    document.getElementById('content').value = templates[template].content;
+    updatePreview();
+}
+
+// Update preview in real-time
+document.getElementById('subject').addEventListener('input', updatePreview);
+document.getElementById('content').addEventListener('input', updatePreview);
+
+function updatePreview() {
+    const subject = document.getElementById('subject').value || 'Subject will appear here...';
+    const content = document.getElementById('content').value || 'Email content will appear here...';
+    
+    document.getElementById('previewSubject').textContent = subject;
+    document.getElementById('previewContent').innerHTML = content.replace(/\n/g, '<br>');
+}
+
+function formatText(command) {
+    const textarea = document.getElementById('content');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    
+    let formattedText = selectedText;
+    switch(command) {
+        case 'bold':
+            formattedText = `**${selectedText}**`;
+            break;
+        case 'italic':
+            formattedText = `*${selectedText}*`;
+            break;
+        case 'underline':
+            formattedText = `_${selectedText}_`;
+            break;
+    }
+    
+    textarea.value = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end);
+    textarea.focus();
+    updatePreview();
+}
+
+function insertVariable(variable) {
+    const textarea = document.getElementById('content');
+    const cursorPos = textarea.selectionStart;
+    const textBefore = textarea.value.substring(0, cursorPos);
+    const textAfter = textarea.value.substring(cursorPos);
+    
+    textarea.value = textBefore + '{{' + variable + '}}' + textAfter;
+    textarea.focus();
+    updatePreview();
+}
+
+function confirmSend() {
+    const subject = document.getElementById('subject').value;
+    const content = document.getElementById('content').value;
+    
+    if (!subject.trim() || !content.trim()) {
+        alert('Please fill in both subject and content before sending.');
+        return;
+    }
+    
+    document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.add('hidden');
+}
+
+function sendEmail() {
+    // Create a hidden form to submit with send_now action
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.style.display = 'none';
+    
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'send_now';
+    form.appendChild(actionInput);
+    
+    const subjectInput = document.createElement('input');
+    subjectInput.type = 'hidden';
+    subjectInput.name = 'subject';
+    subjectInput.value = document.getElementById('subject').value;
+    form.appendChild(subjectInput);
+    
+    const contentInput = document.createElement('input');
+    contentInput.type = 'hidden';
+    contentInput.name = 'content';
+    contentInput.value = document.getElementById('content').value;
+    form.appendChild(contentInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Close modal when clicking outside
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeConfirmModal();
+    }
+});
+
+// Initialize preview
+updatePreview();
+</script>
+{% endblock %}

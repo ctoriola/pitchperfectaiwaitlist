@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Email Campaigns - PitchPerfectAI Waitlist{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-semibold text-gray-900">PitchPerfectAI Admin</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Welcome, {{ current_user.username }}</span>
+                    <a href="{{ url_for('admin_logout') }}" class="text-sm text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Navigation Tabs -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex space-x-8">
+                <a href="{{ url_for('admin_dashboard') }}" 
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-chart-bar mr-2"></i>Dashboard
+                </a>
+                <a href="{{ url_for('admin_users') }}" 
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-users mr-2"></i>Users
+                </a>
+                <a href="{{ url_for('admin_emails') }}" 
+                   class="border-primary text-primary whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-envelope mr-2"></i>Emails
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Email Campaigns Content -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Email Campaigns</h2>
+                <div class="flex space-x-3">
+                    <!-- Test Email Button -->
+                    <button onclick="showTestEmailModal()" 
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-flask mr-2"></i>Test Email
+                    </button>
+                    <a href="{{ url_for('new_email') }}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90">
+                        <i class="fas fa-plus mr-2"></i>New Email
+                    </a>
+                </div>
+            </div>
+
+            <!-- Email Campaigns List -->
+            <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                {% if campaigns %}
+                <ul class="divide-y divide-gray-200">
+                    {% for campaign in campaigns %}
+                    <li class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-medium text-gray-900">{{ campaign[1] }}</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            {% if campaign[5] == 'draft' %}bg-gray-100 text-gray-800
+                                            {% elif campaign[5] == 'sent' %}bg-green-100 text-green-800
+                                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                            {{ campaign[5].title() }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mt-2 flex items-center text-sm text-gray-500">
+                                    <i class="fas fa-users mr-1"></i>
+                                    <span class="mr-4">{{ campaign[2] }} recipients</span>
+                                    {% if campaign[3] %}
+                                    <i class="fas fa-calendar mr-1"></i>
+                                    <span class="mr-4">Sent: {{ campaign[3][:16] }}</span>
+                                    {% endif %}
+                                    <i class="fas fa-user mr-1"></i>
+                                    <span>By: {{ campaign[4] }}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 ml-4">
+                                {% if campaign[5] == 'draft' %}
+                                <button onclick="editCampaign('{{ campaign[0] }}')" 
+                                        class="text-primary hover:text-primary/80 p-2 rounded hover:bg-gray-100"
+                                        title="Edit Campaign">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="sendCampaign('{{ campaign[0] }}')" 
+                                        class="text-green-600 hover:text-green-800 p-2 rounded hover:bg-green-50"
+                                        title="Send Campaign">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                                {% endif %}
+                                <button onclick="viewCampaign('{{ campaign[0] }}')" 
+                                        class="text-gray-600 hover:text-gray-800 p-2 rounded hover:bg-gray-100"
+                                        title="View Campaign">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="deleteCampaign('{{ campaign[0] }}')" 
+                                        class="text-red-600 hover:text-red-800 p-2 rounded hover:bg-red-50"
+                                        title="Delete Campaign">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-envelope text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No email campaigns yet</h3>
+                    <p class="text-gray-500 mb-6">Create your first email campaign to engage with your waitlist users.</p>
+                    <a href="{{ url_for('new_email') }}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90">
+                        <i class="fas fa-plus mr-2"></i>Create First Email
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Email Templates -->
+            <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-md">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Email Templates</h3>
+                    <p class="text-sm text-gray-500">Quick start templates for common email campaigns</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-primary cursor-pointer" onclick="useTemplate('welcome')">
+                            <h4 class="font-medium text-gray-900">Welcome Email</h4>
+                            <p class="text-sm text-gray-500 mt-1">Thank new signups and set expectations</p>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-primary cursor-pointer" onclick="useTemplate('update')">
+                            <h4 class="font-medium text-gray-900">Progress Update</h4>
+                            <p class="text-sm text-gray-500 mt-1">Share development progress and milestones</p>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-primary cursor-pointer" onclick="useTemplate('launch')">
+                            <h4 class="font-medium text-gray-900">Launch Invitation</h4>
+                            <p class="text-sm text-gray-500 mt-1">Invite users to try the product</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editCampaign(id) {
+    // Redirect to edit page (not implemented)
+    alert('Edit functionality not implemented yet');
+}
+
+function sendCampaign(id) {
+    if (confirm('Are you sure you want to send this campaign to all pending users?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("send_draft_campaign") }}';
+        
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'campaign_id';
+        idInput.value = id;
+        
+        form.appendChild(idInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function viewCampaign(id) {
+    window.location.href = '{{ url_for("view_campaign", campaign_id=0) }}'.replace('0', id);
+}
+
+function deleteCampaign(id) {
+    if (confirm('Are you sure you want to delete this campaign? This action cannot be undone.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("delete_campaign", campaign_id=0) }}'.replace('0', id);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function useTemplate(type) {
+    // Redirect to new email with template
+    window.location.href = '{{ url_for("new_email") }}?template=' + type;
+}
+
+function showTestEmailModal() {
+    const email = prompt('Enter email address to send test email:');
+    if (email && email.includes('@')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("test_email") }}';
+        
+        const emailInput = document.createElement('input');
+        emailInput.type = 'hidden';
+        emailInput.name = 'test_email';
+        emailInput.value = email;
+        
+        form.appendChild(emailInput);
+        document.body.appendChild(form);
+        form.submit();
+    } else if (email) {
+        alert('Please enter a valid email address');
+    }
+}
+</script>
+{% endblock %}

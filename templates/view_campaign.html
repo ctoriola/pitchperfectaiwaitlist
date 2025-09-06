@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}View Campaign - PitchPerfectAI Waitlist{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-semibold text-gray-900">PitchPerfectAI Admin</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Welcome, {{ current_user.username }}</span>
+                    <a href="{{ url_for('admin_logout') }}" class="text-sm text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Campaign Details -->
+    <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">{{ campaign.subject }}</h2>
+                    <div class="flex items-center space-x-4 mt-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if campaign.status == 'draft' %}bg-gray-100 text-gray-800
+                            {% elif campaign.status == 'sent' %}bg-green-100 text-green-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ campaign.status.title() }}
+                        </span>
+                        {% if campaign.sent_at %}
+                        <span class="text-sm text-gray-500">
+                            <i class="fas fa-calendar mr-1"></i>Sent: {{ campaign.sent_at[:16] }}
+                        </span>
+                        {% endif %}
+                        {% if campaign.recipients_count %}
+                        <span class="text-sm text-gray-500">
+                            <i class="fas fa-users mr-1"></i>{{ campaign.recipients_count }} recipients
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{{ url_for('admin_emails') }}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Campaigns
+                </a>
+            </div>
+
+            <!-- Campaign Content -->
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Email Content</h3>
+                    
+                    <!-- Preview Toggle -->
+                    <div class="mb-4">
+                        <div class="sm:hidden">
+                            <select id="preview-select" class="block w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary">
+                                <option value="raw">Raw Content</option>
+                                <option value="preview">HTML Preview</option>
+                            </select>
+                        </div>
+                        <div class="hidden sm:block">
+                            <nav class="flex space-x-4">
+                                <button onclick="showRaw()" id="raw-tab" 
+                                        class="px-3 py-2 font-medium text-sm rounded-md bg-primary text-white">
+                                    Raw Content
+                                </button>
+                                <button onclick="showPreview()" id="preview-tab" 
+                                        class="px-3 py-2 font-medium text-sm rounded-md text-gray-500 hover:text-gray-700">
+                                    HTML Preview
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+
+                    <!-- Raw Content -->
+                    <div id="raw-content" class="space-y-4">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <pre class="whitespace-pre-wrap text-sm text-gray-900 font-mono">{{ campaign.content }}</pre>
+                        </div>
+                    </div>
+
+                    <!-- HTML Preview -->
+                    <div id="preview-content" class="hidden space-y-4">
+                        <div class="bg-white border rounded-lg p-6">
+                            <div class="prose max-w-none">
+                                {{ campaign.content.replace('\n', '<br>')|safe }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campaign Metadata -->
+                <div class="bg-gray-50 px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Campaign Details</h3>
+                    <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Campaign ID</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ campaign.id }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Created By</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ campaign.created_by }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Status</dt>
+                            <dd class="mt-1">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if campaign.status == 'draft' %}bg-gray-100 text-gray-800
+                                    {% elif campaign.status == 'sent' %}bg-green-100 text-green-800
+                                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                    {{ campaign.status.title() }}
+                                </span>
+                            </dd>
+                        </div>
+                        {% if campaign.recipients_count %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Recipients</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ campaign.recipients_count }} users</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showRaw() {
+    document.getElementById('raw-content').classList.remove('hidden');
+    document.getElementById('preview-content').classList.add('hidden');
+    document.getElementById('raw-tab').classList.add('bg-primary', 'text-white');
+    document.getElementById('raw-tab').classList.remove('text-gray-500', 'hover:text-gray-700');
+    document.getElementById('preview-tab').classList.remove('bg-primary', 'text-white');
+    document.getElementById('preview-tab').classList.add('text-gray-500', 'hover:text-gray-700');
+}
+
+function showPreview() {
+    document.getElementById('preview-content').classList.remove('hidden');
+    document.getElementById('raw-content').classList.add('hidden');
+    document.getElementById('preview-tab').classList.add('bg-primary', 'text-white');
+    document.getElementById('preview-tab').classList.remove('text-gray-500', 'hover:text-gray-700');
+    document.getElementById('raw-tab').classList.remove('bg-primary', 'text-white');
+    document.getElementById('raw-tab').classList.add('text-gray-500', 'hover:text-gray-700');
+}
+
+// Handle mobile select
+document.getElementById('preview-select').addEventListener('change', function() {
+    if (this.value === 'raw') {
+        showRaw();
+    } else {
+        showPreview();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login - PitchPerfectAI{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-primary-100 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <!-- Background Elements -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-bounce-gentle"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-bounce-gentle" style="animation-delay: 1s;"></div>
+    </div>
+    
+    <div class="max-w-md w-full space-y-8 relative z-10">
+        <div class="text-center animate-fade-in">
+            <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg animate-glow">
+                <i class="fas fa-shield-alt text-white text-2xl"></i>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Admin <span class="gradient-text">Login</span>
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Access the PitchPerfectAI admin dashboard
+            </p>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-2xl p-8 glass-effect border border-primary-100 animate-slide-up">
+            <form class="space-y-6" method="POST">
+                <div class="space-y-4">
+                    <div>
+                        <label for="username" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-user text-primary-500 mr-2"></i>Username
+                        </label>
+                        <input id="username" name="username" type="text" required 
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:border-primary-300" 
+                               placeholder="Enter your username">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-lock text-primary-500 mr-2"></i>Password
+                        </label>
+                        <input id="password" name="password" type="password" required 
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:border-primary-300" 
+                               placeholder="Enter your password">
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" 
+                            class="group relative w-full flex justify-center items-center py-4 px-6 border border-transparent text-lg font-semibold rounded-lg text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 transform hover:scale-105 animate-glow shadow-lg">
+                        <span class="absolute left-0 inset-y-0 flex items-center pl-4">
+                            <i class="fas fa-shield-alt text-white group-hover:animate-bounce-gentle"></i>
+                        </span>
+                        <span class="ml-3">Access Dashboard</span>
+                        <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="bg-primary-50 border-2 border-primary-200 rounded-xl p-6 animate-slide-up" style="animation-delay: 0.2s;">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-info-circle text-white text-sm"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-sm font-semibold text-primary-800 mb-2">
+                        Default Credentials
+                    </h3>
+                    <div class="text-sm text-primary-700 space-y-1">
+                        <p class="flex items-center">
+                            <span class="font-medium">Username:</span>
+                            <code class="ml-2 px-2 py-1 bg-white rounded border text-primary-800 font-mono text-xs">admin</code>
+                        </p>
+                        <p class="flex items-center">
+                            <span class="font-medium">Password:</span>
+                            <code class="ml-2 px-2 py-1 bg-white rounded border text-primary-800 font-mono text-xs">admin123</code>
+                        </p>
+                    </div>
+                    <p class="mt-2 text-xs text-primary-600">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Remember to change these in production!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

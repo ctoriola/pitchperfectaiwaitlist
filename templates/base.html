@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PitchPerfectAI Waitlist{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fef7f6',
+                            100: '#fdeeed',
+                            200: '#ff9081',
+                            300: '#ff8678',
+                            400: '#ed7f73',
+                            500: '#e96354',
+                            600: '#d44c3f',
+                            700: '#b73a2f',
+                            800: '#97312a',
+                            900: '#7d2d28'
+                        },
+                        coral: '#e96354',
+                        'coral-light': '#ff8678',
+                        'coral-dark': '#d44c3f'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                        'bounce-gentle': 'bounceGentle 2s infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        bounceGentle: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px rgba(233, 99, 84, 0.3)' },
+                            '100%': { boxShadow: '0 0 30px rgba(233, 99, 84, 0.6)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #e96354, #ff8678);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50 space-y-2">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} px-4 py-3 rounded-lg shadow-lg max-w-sm
+                        {% if category == 'error' %}bg-red-100 border border-red-400 text-red-700
+                        {% elif category == 'success' %}bg-green-100 border border-green-400 text-green-700
+                        {% elif category == 'warning' %}bg-yellow-100 border border-yellow-400 text-yellow-700
+                        {% else %}bg-blue-100 border border-blue-400 text-blue-700{% endif %}">
+                        {{ message }}
+                        <button onclick="this.parentElement.remove()" class="float-right ml-2 text-lg leading-none">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <script>
+        // Auto-hide flash messages after 5 seconds
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
