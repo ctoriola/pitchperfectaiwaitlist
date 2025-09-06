@@ -277,7 +277,16 @@ def excelsior_dashboard():
         
         # Get recent signups (last 7 days)
         week_ago = datetime.now() - timedelta(days=7)
-        recent_users = [u for u in all_users if u.to_dict().get('signup_date', datetime.min) > week_ago]
+        recent_users = []
+        for u in all_users:
+            user_data = u.to_dict()
+            signup_date = user_data.get('signup_date')
+            if signup_date and hasattr(signup_date, 'replace'):
+                # Convert timezone-aware datetime to naive for comparison
+                if signup_date.tzinfo is not None:
+                    signup_date = signup_date.replace(tzinfo=None)
+                if signup_date > week_ago:
+                    recent_users.append(u)
         
         stats = {
             'total_users': total_users,
@@ -544,7 +553,18 @@ def api_stats():
         users_ref = db.collection('waitlist_users')
         thirty_days_ago = datetime.now() - timedelta(days=30)
         
-        recent_users_docs = users_ref.where('signup_date', '>=', thirty_days_ago).get()
+        # Get all users and filter manually to avoid timezone comparison issues
+        all_users_docs = users_ref.get()
+        recent_users_docs = []
+        for doc in all_users_docs:
+            user_data = doc.to_dict()
+            signup_date = user_data.get('signup_date')
+            if signup_date and hasattr(signup_date, 'replace'):
+                # Convert timezone-aware datetime to naive for comparison
+                if signup_date.tzinfo is not None:
+                    signup_date = signup_date.replace(tzinfo=None)
+                if signup_date >= thirty_days_ago:
+                    recent_users_docs.append(doc)
         
         # Group by date
         daily_signups = {}
