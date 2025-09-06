@@ -13,9 +13,10 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <span class="text-sm text-gray-500">Welcome, {{ current_user.username }}</span>
-                    <a href="{{ url_for('admin_logout') }}" class="text-sm text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
-                    </a>
+                    <a href="{{ url_for('excelsior_logout') }}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors rounded-lg">
+                    <i class="fas fa-sign-out-alt mr-3"></i>
+                    Logout
+                </a>
                 </div>
             </div>
         </div>
@@ -25,18 +26,18 @@
     <div class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav class="flex space-x-8">
-                <a href="{{ url_for('admin_dashboard') }}" 
-                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                    <i class="fas fa-chart-bar mr-2"></i>Dashboard
-                </a>
-                <a href="{{ url_for('admin_users') }}" 
-                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                    <i class="fas fa-users mr-2"></i>Users
-                </a>
-                <a href="{{ url_for('admin_emails') }}" 
-                   class="border-primary text-primary whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                    <i class="fas fa-envelope mr-2"></i>Emails
-                </a>
+                <a href="{{ url_for('excelsior_dashboard') }}" class="flex items-center px-4 py-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+                <i class="fas fa-chart-bar mr-3"></i>
+                Dashboard
+            </a>
+            <a href="{{ url_for('excelsior_users') }}" class="flex items-center px-4 py-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+                <i class="fas fa-users mr-3"></i>
+                Users
+            </a>
+            <a href="{{ url_for('excelsior_emails') }}" class="flex items-center px-4 py-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+                <i class="fas fa-envelope mr-3"></i>
+                Email Campaigns
+            </a>
             </nav>
         </div>
     </div>
@@ -52,7 +53,7 @@
                 </a>
             </div>
 
-            <form method="POST" class="space-y-6">
+            <form method="POST" action="{{ url_for('save_email') }}" class="space-y-6">
                 <div class="bg-white shadow sm:rounded-lg">
                     <div class="px-4 py-5 sm:p-6">
                         <!-- Subject -->
@@ -161,10 +162,10 @@ You can use variables like {{name}}, {{email}}, and {{company}} which will be au
                 This will send the email to all pending users. This action cannot be undone.
             </p>
             <div class="flex justify-center space-x-3">
-                <button onclick="closeConfirmModal()" 
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                    Cancel
-                </button>
+                    <button type="button" onclick="window.location.href='{{ url_for('excelsior_emails') }}'" 
+                            class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
                 <button onclick="sendEmail()" 
                         class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">
                     Send Email
