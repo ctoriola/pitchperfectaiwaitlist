@@ -396,93 +396,107 @@ def excelsior_emails():
     campaigns = []
     
     try:
-        print("Starting campaigns loading process...")
+        print("[PRODUCTION] Starting campaigns loading process...")
+        
+        # Check if we're in production and have Firebase credentials
+        import os
+        firebase_key = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
+        if not firebase_key:
+            print("[PRODUCTION] ERROR: FIREBASE_SERVICE_ACCOUNT_KEY not found in environment")
+            flash('Firebase credentials not configured', 'error')
+            return render_template('admin_emails.html', campaigns=[])
+        
+        print(f"[PRODUCTION] Firebase key found, length: {len(firebase_key)}")
         
         # Test Firebase connection first
         try:
             test_ref = db.collection('waitlist_users').limit(1).get()
-            print(f"Firebase connection test successful, found {len(test_ref)} test docs")
+            print(f"[PRODUCTION] Firebase connection test successful, found {len(test_ref)} test docs")
         except Exception as conn_error:
-            print(f"Firebase connection failed: {conn_error}")
+            print(f"[PRODUCTION] Firebase connection failed: {conn_error}")
             import traceback
             traceback.print_exc()
-            flash('Firebase connection error', 'error')
+            flash('Firebase connection error - check credentials', 'error')
             return render_template('admin_emails.html', campaigns=[])
         
         # Alternative approach: Use stream() instead of get()
         campaigns_ref = db.collection('email_campaigns')
-        print("Got campaigns collection reference")
+        print("[PRODUCTION] Got campaigns collection reference")
         
-        # Try multiple approaches to get documents
+        # Try to get existing campaigns first
         campaigns_docs = []
         
-        # Method 1: Simple get()
         try:
+            # Check if any campaigns exist by trying to get them
             campaigns_docs = list(campaigns_ref.get())
-            print(f"Method 1 (get): Retrieved {len(campaigns_docs)} campaign documents")
-        except Exception as get_error:
-            print(f"Method 1 failed: {get_error}")
+            print(f"[PRODUCTION] Found {len(campaigns_docs)} existing campaigns")
             
-            # Method 2: Stream documents
-            try:
-                campaigns_docs = list(campaigns_ref.stream())
-                print(f"Method 2 (stream): Retrieved {len(campaigns_docs)} campaign documents")
-            except Exception as stream_error:
-                print(f"Method 2 failed: {stream_error}")
+            # If no campaigns found, the collection might be empty but valid
+            if len(campaigns_docs) == 0:
+                print("[PRODUCTION] No campaigns found - collection exists but is empty")
+                # Don't create sample, just return empty list
+                return render_template('admin_emails.html', campaigns=[])
                 
-                # Method 3: Create collection if it doesn't exist
-                try:
-                    print("Attempting to initialize email_campaigns collection...")
-                    dummy_doc = {
-                        'subject': 'Welcome to PitchPerfectAI!',
-                        'content': 'This is a sample email campaign.',
-                        'status': 'draft',
-                        'created_at': datetime.now(),
-                        'sent_at': None,
-                        'recipients_count': 0,
-                        'is_sample': True
-                    }
-                    sample_ref = campaigns_ref.add(dummy_doc)
-                    print(f"Created sample campaign with ID: {sample_ref[1].id}")
-                    campaigns_docs = list(campaigns_ref.get())
-                    print(f"Method 3 (create sample): Retrieved {len(campaigns_docs)} campaign documents")
-                except Exception as create_error:
-                    print(f"Method 3 failed: {create_error}")
-                    import traceback
-                    traceback.print_exc()
-                    campaigns_docs = []
+        except Exception as get_error:
+            print(f"[PRODUCTION] Error accessing campaigns collection: {get_error}")
+            import traceback
+            traceback.print_exc()
+            
+            # Collection might not exist, try to create it with a real campaign from the logs
+            try:
+                print("[PRODUCTION] Creating email_campaigns collection with saved campaign...")
+                # Use the campaign data from your logs
+                saved_campaign = {
+                    'subject': 'Welcome to PitchPerfectAI Waitlist! 🎉',
+                    'content': "Hi ,\r\n\r\nThank you for joining the PitchPerfectAI waitlist! We're thrilled to have you on board.\r\n\r\nPitchPerfectAI is revolutionizing how developers and startups create compelling pitch decks from their GitHub repositories. Our AI-powered platform will help you:\r\n\r\n✨ Transform your code into investor-ready presentations\r\n🚀 Highlight your project's key features and benefits\r\n📊 Generate professional slides with beautiful templates\r\n💡 Tell your project's story in a compelling way\r\n\r\nWe're working hard to bring you the best possible experience. You'll be among the first to know when we launch!\r\n\r\nIn the meantime, feel free to reply to this email with any questions or feedback.\r\n\r\nBest regards,\r\nThe PitchPerfectAI Team\r\n\r\nP.S. Follow us on Twitter @PitchPerfectAI for updates and tips!",
+                    'status': 'draft',
+                    'created_at': datetime.now(),
+                    'sent_at': None,
+                    'recipients_count': 0
+                }
+                doc_ref = campaigns_ref.add(saved_campaign)
+                print(f"[PRODUCTION] Created campaign with ID: {doc_ref[1].id}")
+                campaigns_docs = list(campaigns_ref.get())
+                print(f"[PRODUCTION] Retrieved {len(campaigns_docs)} campaigns after creation")
+                
+            except Exception as create_error:
+                print(f"[PRODUCTION] Failed to create collection: {create_error}")
+                import traceback
+                traceback.print_exc()
+                flash('Unable to access or create email campaigns collection', 'error')
+                return render_template('admin_emails.html', campaigns=[])
         
         # Process documents
         campaigns_list = []
-        print(f"Processing {len(campaigns_docs)} documents...")
+        print(f"[PRODUCTION] Processing {len(campaigns_docs)} documents...")
         
         for i, doc in enumerate(campaigns_docs):
             try:
-                print(f"Processing document {i+1}: {doc.id}")
                 campaign_data = doc.to_dict()
-                print(f"Document data keys: {list(campaign_data.keys()) if campaign_data else 'None'}")
-                
                 if campaign_data:
                     campaign_data['id'] = doc.id
                     campaigns_list.append(campaign_data)
-                    print(f"Added campaign: {campaign_data.get('subject', 'No subject')}")
-                else:
-                    print(f"Document {doc.id} has no data")
+                    print(f"[PRODUCTION] Added campaign: {campaign_data.get('subject', 'No subject')}")
                     
             except Exception as doc_error:
-                print(f"Error processing document {doc.id}: {doc_error}")
-                import traceback
-                traceback.print_exc()
+                print(f"[PRODUCTION] Error processing document {doc.id}: {doc_error}")
                 continue
         
-        # Sort by created_at in Python instead of Firestore
+        # Sort by created_at
         campaigns_list.sort(key=lambda x: x.get('created_at', datetime.min), reverse=True)
         
-        print(f"Successfully loaded {len(campaigns_list)} campaigns")
+        print(f"[PRODUCTION] Final result: {len(campaigns_list)} campaigns loaded")
+        
+        # Force flash message to show what we found
+        if len(campaigns_list) > 0:
+            flash(f'Loaded {len(campaigns_list)} email campaigns successfully', 'success')
+        else:
+            flash('No email campaigns found - create your first campaign!', 'info')
+            
         return render_template('admin_emails.html', campaigns=campaigns_list)
         
     except Exception as e:
-        print(f"Critical error in excelsior_emails: {e}")
+        print(f"[PRODUCTION] Critical error in excelsior_emails: {e}")
         import traceback
         traceback.print_exc()
         flash('Error loading email campaigns', 'error')
