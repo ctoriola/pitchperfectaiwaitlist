@@ -137,12 +137,20 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     try:
+        # For fallback admin, always return user
+        if user_id == 'admin':
+            return User(user_id)
+        
+        # Try Firebase lookup
         admin_ref = db.collection('admin_users').document(user_id)
         admin_doc = admin_ref.get()
         if admin_doc.exists:
             return User(user_id)
-    except:
-        pass
+    except Exception as e:
+        print(f"User loader error: {e}")
+        # Fallback for admin user
+        if user_id == 'admin':
+            return User(user_id)
     return None
 
 def admin_required(f):
@@ -211,7 +219,8 @@ def excelsior_login():
                 if username == 'admin' and password == 'admin123':
                     print("Using fallback admin credentials")
                     user = User(username)
-                    login_user(user)
+                    login_user(user, remember=True)
+                    print(f"User logged in: {current_user.is_authenticated}")
                     return redirect(url_for('excelsior_dashboard'))
                 
                 # Try Firebase authentication
@@ -229,7 +238,7 @@ def excelsior_login():
                     
                     if admin_data.get('password') == hashed_password:
                         user = User(username)
-                        login_user(user)
+                        login_user(user, remember=True)
                         return redirect(url_for('excelsior_dashboard'))
                 
                 flash('Invalid credentials', 'error')
@@ -239,7 +248,7 @@ def excelsior_login():
                 if username == 'admin' and password == 'admin123':
                     print("Using emergency fallback credentials")
                     user = User(username)
-                    login_user(user)
+                    login_user(user, remember=True)
                     return redirect(url_for('excelsior_dashboard'))
                 flash('Login error occurred', 'error')
         else:
