@@ -337,7 +337,7 @@ def edit_user(user_id):
 
 @app.route('/excelsior/export')
 @admin_required
-def export_users():
+def excelsior_export_users():
     try:
         users_ref = db.collection('waitlist_users')
         users_docs = users_ref.order_by('signup_date').get()
