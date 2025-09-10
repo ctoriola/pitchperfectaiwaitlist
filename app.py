@@ -43,7 +43,9 @@ FROM_EMAIL = os.getenv('FROM_EMAIL', 'noreply@pitchperfectai.com')
 FROM_NAME = os.getenv('FROM_NAME', 'PitchPerfectAI Team')
 
 def send_email_campaign(subject, content, recipients):
-    """Send email campaign to list of recipients"""
+    """Send email campaign to list of recipients
+    Returns: (sent_count, successful_emails) where successful_emails is a list of email addresses that were sent successfully
+    """
     if not SMTP_USERNAME or not SMTP_PASSWORD:
         # For development/demo - just simulate sending
         print(f"DEMO MODE: Would send email '{subject}' to {len(recipients)} recipients")
@@ -53,9 +55,12 @@ def send_email_campaign(subject, content, recipients):
             print(f"  Recipient {i+1}: {recipient['email']} ({recipient.get('name', 'No name')})")
         if len(recipients) > 3:
             print(f"  ... and {len(recipients) - 3} more recipients")
-        return len(recipients)
+        # In demo mode, return all emails as "successful" for testing
+        return len(recipients), [r['email'] for r in recipients]
     
     sent_count = 0
+    successful_emails = []
+    
     try:
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
@@ -81,6 +86,7 @@ def send_email_campaign(subject, content, recipients):
                 
                 server.send_message(msg)
                 sent_count += 1
+                successful_emails.append(recipient['email'])
                 print(f"Email sent to {recipient['email']}")
                 
             except Exception as e:
@@ -91,9 +97,9 @@ def send_email_campaign(subject, content, recipients):
         
     except Exception as e:
         print(f"SMTP Error: {str(e)}")
-        return 0
+        return 0, []
     
-    return sent_count
+    return sent_count, successful_emails
 
 def init_db():
     """Initialize database with default admin user"""
@@ -599,7 +605,7 @@ def test_email():
         
         # Send test email
         test_recipient = [{'email': test_email_addr, 'name': 'Test User'}]
-        sent_count = send_email_campaign(subject, content, test_recipient)
+        sent_count, successful_emails = send_email_campaign(subject, content, test_recipient)
         
         if sent_count > 0:
             flash(f'Test email sent successfully to {test_email_addr}', 'success')
@@ -643,26 +649,57 @@ def send_campaign(campaign_id):
             recipients.append(user_data)
         
         if recipients:
-            # Send emails
-            sent_count = send_email_campaign(subject, content, recipients)
+            print(f"Attempting to send campaign to {len(recipients)} recipients")
+            
+            # Send emails and get list of successful recipients
+            sent_count, successful_emails = send_email_campaign(subject, content, recipients)
+            
+            print(f"Email campaign function returned: {sent_count} successful sends")
+            print(f"Successful email addresses: {successful_emails}")
             
             # Update campaign status
             campaign_ref.update({
                 'status': 'sent',
                 'sent_at': datetime.now(),
-                'recipients_count': sent_count
+                'recipients_count': sent_count  # Use actual sent count
             })
             
-            # Update user status to 'contacted'
+            # Update user status to 'contacted' ONLY for users who received emails successfully
+            updated_users = 0
             for doc in pending_users_docs:
-                doc.reference.update({'status': 'contacted'})
+                try:
+                    user_data = doc.to_dict()
+                    user_email = user_data.get('email')
+                    
+                    # Only update status if email was sent successfully to this user
+                    if user_email in successful_emails:
+                        doc.reference.update({'status': 'contacted'})
+                        updated_users += 1
+                        print(f"Updated user {user_email} to 'contacted' status")
+                    else:
+                        print(f"Skipping status update for {user_email} - email not sent successfully")
+                        
+                except Exception as update_error:
+                    print(f"Error updating user {doc.id}: {update_error}")
             
-            flash(f'Campaign sent to {sent_count} recipients', 'success')
+            print(f"Updated {updated_users} users to 'contacted' status out of {len(recipients)} total recipients")
+            
+            if not SMTP_USERNAME or not SMTP_PASSWORD:
+                flash(f'Campaign marked as sent to {len(recipients)} recipients (Demo Mode)', 'success')
+            else:
+                if sent_count == len(recipients):
+                    flash(f'Campaign sent successfully to all {sent_count} recipients', 'success')
+                elif sent_count > 0:
+                    flash(f'Campaign partially sent: {sent_count} of {len(recipients)} emails delivered successfully', 'warning')
+                else:
+                    flash('Campaign failed: No emails were sent successfully', 'error')
         else:
             flash('No pending users to send email to', 'warning')
             
     except Exception as e:
         print(f"Send campaign error: {e}")
+        import traceback
+        traceback.print_exc()
         flash(f'Error sending campaign: {str(e)}', 'error')
     
     return redirect(url_for('excelsior_emails'))
@@ -681,11 +718,33 @@ def view_campaign(campaign_id):
         campaign_data = campaign_doc.to_dict()
         campaign_data['id'] = campaign_id
         
+        # Ensure all required fields exist with defaults
+        campaign_data.setdefault('subject', 'No Subject')
+        campaign_data.setdefault('content', 'No Content')
+        campaign_data.setdefault('status', 'unknown')
+        campaign_data.setdefault('recipients_count', 0)
+        campaign_data.setdefault('created_by', 'Unknown')
+        
+        # Handle datetime fields safely
+        if 'sent_at' in campaign_data and campaign_data['sent_at']:
+            if hasattr(campaign_data['sent_at'], 'strftime'):
+                campaign_data['sent_at'] = campaign_data['sent_at'].strftime('%Y-%m-%d %H:%M')
+            else:
+                campaign_data['sent_at'] = str(campaign_data['sent_at'])[:16]
+        
+        if 'created_at' in campaign_data and campaign_data['created_at']:
+            if hasattr(campaign_data['created_at'], 'strftime'):
+                campaign_data['created_at'] = campaign_data['created_at'].strftime('%Y-%m-%d %H:%M')
+            else:
+                campaign_data['created_at'] = str(campaign_data['created_at'])[:16]
+        
         return render_template('view_campaign.html', campaign=campaign_data)
         
     except Exception as e:
         print(f"View campaign error: {e}")
-        flash('Error loading campaign', 'error')
+        import traceback
+        traceback.print_exc()
+        flash(f'Error loading campaign: {str(e)}', 'error')
         return redirect(url_for('excelsior_emails'))
 
 @app.route('/excelsior/delete-campaign/<campaign_id>', methods=['POST'])
